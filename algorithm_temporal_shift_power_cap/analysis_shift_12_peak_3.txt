@@ -1,4 +1,0 @@
-Shift Window: 12 hours
-Max Peak Power Limit: 3 kWh
-Peak Power Utilization: 3.00 kWh
-Total Carbon Emissions: 74989.14 gCO2

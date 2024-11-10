@@ -2,9 +2,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-# Define paths to the updated CSV files
+# Define the CISO name variable
+ciso_name = 'ERCO'
+
+# Define paths to the updated CSV files using the CISO variable
 power_trace_path = Path('..') / 'data_powerTrace' / 'cella_pdu6_converted.csv'
-ci_data_path = Path('..') / 'data_SPC24' / 'SPCI-CISO' / 'CISO_direct_24hr_CI_forecasts_spci__alpha_0.1.csv'
+ci_data_path = Path('..') / 'data_SPC24' / f'SPCI-{ciso_name}' / f'{ciso_name}_direct_24hr_CI_forecasts_spci__alpha_0.1.csv'
 
 # Read the CSV files with datetime parsing
 power_trace_df = pd.read_csv(power_trace_path, parse_dates=['hour'])
@@ -33,14 +36,14 @@ merged_df.set_index('hour', inplace=True)
 fig, ax1 = plt.subplots(figsize=(15, 7))
 
 ax1.set_xlabel('Time')
-ax1.set_ylabel('Actual Carbon Intensity and Carbon emissions')
+ax1.set_ylabel('Actual Carbon Intensity and Carbon Emissions')
 ax1.plot(merged_df.index, merged_df['carbon_intensity_actual'], label='Actual Carbon Intensity', color='orange')
-ax1.plot(merged_df.index, merged_df['product'], label='Carbon emission', color='green')
+ax1.plot(merged_df.index, merged_df['product'], label='Carbon Emission', color='green')
 ax1.tick_params(axis='y')
 
 # Create a second y-axis for measured power utilization
 ax2 = ax1.twinx()
-ax2.set_ylim(0.2, 3) 
+ax2.set_ylim(0.2, 3)
 ax2.set_ylabel('Measured Power Utilization')
 ax2.plot(merged_df.index, merged_df['measured_power_util'], label='Measured Power Utilization', color='blue')
 ax2.tick_params(axis='y')
@@ -50,9 +53,9 @@ lines_1, labels_1 = ax1.get_legend_handles_labels()
 lines_2, labels_2 = ax2.get_legend_handles_labels()
 ax1.legend(lines_1 + lines_2, labels_1 + labels_2, loc='upper right')
 
-plt.title('Measured Power Utilization, Actual Carbon Intensity , and Carbon Emissions')
+plt.title(f'Measured Power Utilization, Actual Carbon Intensity, and Carbon Emissions for {ciso_name}')
 plt.tight_layout()
 
-# Save the plot as a PNG image
-plt.savefig('plot.png')
+# Save the plot as a PNG image with the CISO variable in the file name
+plt.savefig(f'algorithm_no_optimization_{ciso_name}.png')
 plt.close()
