@@ -8,7 +8,7 @@ generate_image = False
 generate_csv = False  # Set to False to avoid generating multiple CSV files
 
 # Define dataset and paths
-ciso_name = 'ISNE'  # Define the name of the CISO dataset
+ciso_name = 'CISO'  # Define the name of the CISO dataset
 power_trace_path = Path('..') / 'data_powerTrace' / 'cella_pdu6_converted.csv'
 
 # Define alpha levels and corresponding file paths
@@ -49,7 +49,7 @@ average_power_utilization = merged_df['measured_power_util'].mean()
 
 # Define the max peak power as a multiple of the average power utilization
 # Since you want only one parameter, we'll fix the power multiplier at 1
-power_multiplier = 5
+power_multiplier = 3
 max_peak_power = power_multiplier * average_power_utilization
 
 # Function to perform workload shifting

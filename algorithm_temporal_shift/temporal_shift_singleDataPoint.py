@@ -4,8 +4,8 @@ from pathlib import Path
 
 # Define variables to control the generation of data, image, and CSV files
 generate_text = False
-generate_image = False
-generate_csv = True
+generate_image = True
+generate_csv = False
 
 # Read the CSV files with proper datetime parsing
 ciso_name = 'CISO'  # Define the name of the CISO dataset
@@ -22,7 +22,7 @@ power_trace_df.rename(columns={'hour': 'datetime'}, inplace=True)
 merged_df = pd.merge(power_trace_df, ci_data, on='datetime')
 
 # Define the shift window (in hours)
-shift_window = 3  # You can change this value as needed
+shift_window = 24  # You can change this value as needed
 
 # Check if shift_window is 0 to skip optimization
 if shift_window == 0:
