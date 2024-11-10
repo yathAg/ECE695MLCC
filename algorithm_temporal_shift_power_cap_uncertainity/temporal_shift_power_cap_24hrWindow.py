@@ -34,11 +34,9 @@ shift_windows = list(range(0, 25))  # Shift windows from 0 to 24 inclusive
 
 # Results for using ci_midpoint_forecast
 total_emissions_ci = []
-peak_power_utilization_ci = []
 
 # Results for using avg_carbon_intensity_predicted
 total_emissions_predicted = []
-peak_power_utilization_predicted = []
 
 # Calculate the average power utilization without optimization
 average_power_utilization = merged_df['measured_power_util'].mean()
@@ -102,25 +100,22 @@ def perform_shifting(df, forecast_column, shift_window):
     # Calculate the emissions using shifted power utilization and actual carbon intensity
     df['emissions'] = df['shifted_power_util'] * df['carbon_intensity_actual']
     
-    # Calculate peak power utilization and total carbon emissions
-    peak_power_utilization = df['shifted_power_util'].max()
+    # Calculate total carbon emissions
     total_carbon_emissions = df['emissions'].sum()
     
-    return total_carbon_emissions, peak_power_utilization, df
+    return total_carbon_emissions, df
 
 # Loop over shift windows
 for shift_window in shift_windows:
     # Using ci_midpoint_forecast
-    emissions_ci, peak_power_ci, df_ci = perform_shifting(
+    emissions_ci, df_ci = perform_shifting(
         merged_df, 'ci_midpoint_forecast', shift_window)
     total_emissions_ci.append(emissions_ci)
-    peak_power_utilization_ci.append(peak_power_ci)
     
     # Using avg_carbon_intensity_predicted
-    emissions_predicted, peak_power_predicted, df_predicted = perform_shifting(
+    emissions_predicted, df_predicted = perform_shifting(
         merged_df, 'avg_carbon_intensity_predicted', shift_window)
     total_emissions_predicted.append(emissions_predicted)
-    peak_power_utilization_predicted.append(peak_power_predicted)
     
     # Optional: Generate CSV files for each shift window and method
     if generate_csv:
@@ -132,12 +127,10 @@ for shift_window in shift_windows:
         with open(f'analysis_shift_{shift_window}_peak_{max_peak_power:.2f}_ci.txt', 'w') as f:
             f.write(f"Shift Window: {shift_window} hours (Using CI Midpoint Forecast)\n")
             f.write(f"Max Peak Power Limit: {max_peak_power:.2f} kWh\n")
-            f.write(f"Peak Power Utilization: {peak_power_ci:.2f} kWh\n")
             f.write(f"Total Carbon Emissions: {emissions_ci:.2f} gCO2\n")
         with open(f'analysis_shift_{shift_window}_peak_{max_peak_power:.2f}_predicted.txt', 'w') as f:
             f.write(f"Shift Window: {shift_window} hours (Using Predicted Carbon Intensity)\n")
             f.write(f"Max Peak Power Limit: {max_peak_power:.2f} kWh\n")
-            f.write(f"Peak Power Utilization: {peak_power_predicted:.2f} kWh\n")
             f.write(f"Total Carbon Emissions: {emissions_predicted:.2f} gCO2\n")
 
 # Plot total emissions vs. shift window for both methods
