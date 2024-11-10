@@ -4,7 +4,7 @@ from pathlib import Path
 
 # Read the data
 # Define dataset and paths
-ciso_name = 'CISO'  # Define the name of the CISO dataset
+ciso_name = 'ISNE'  # Define the name of the CISO dataset
 power_trace_path = Path('..') / 'data_powerTrace' / 'cella_pdu6_converted.csv'
 ci_data_path = Path('..') / 'data_SPC24' / f'SPCI-{ciso_name}' / f'{ciso_name}_direct_24hr_CI_forecasts_spci__alpha_0.1.csv'
 
@@ -111,7 +111,12 @@ for power_multiplier in [1, 2, 5, 10, 100]:
 
 plt.xlabel('Shift Window (hours)')
 plt.ylabel('Total Carbon Emissions (gCO2)')
-plt.title('Total Carbon Emissions vs. Shift Window for Different Power Multipliers')
+plt.title(f'Total Carbon Emissions vs. Shift Window for Different Power Multipliers ({ciso_name})')
 plt.legend(title='Power Multiplier')
 plt.grid(True)
+
+# Save the plot with the specified filename
+plot_filename = f'{ciso_name}_power_utilization_analysis_shift_24hrs.png'
+plt.savefig(plot_filename)
+
 plt.show()
