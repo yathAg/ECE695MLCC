@@ -22,7 +22,7 @@ from datetime import datetime, timedelta
 import os
 import sys
 
-def update_time_column(input_file, start_date_str='2019-05-01 00:00:00'):
+def update_time_column(input_file, start_date_str='2022-07-01 00:00:00'):
     """
     Updates the 'time' column in a CSV file to start from a specified date with 5-minute increments.
     Saves the result with "_time_converted" appended to the original file name.
