@@ -8,34 +8,40 @@ generate_image = False
 generate_csv = False  # Set to False to avoid generating multiple CSV files
 
 # Define dataset and paths
-ciso_name = 'CISO'  # Define the name of the CISO dataset
+ciso_name = 'ISNE'  # Define the name of the CISO dataset
 power_trace_path = Path('..') / 'data_powerTrace' / 'cella_pdu6_converted.csv'
-ci_data_path = Path('..') / 'data_SPC24' / f'SPCI-{ciso_name}' / f'{ciso_name}_direct_24hr_CI_forecasts_spci__alpha_0.1.csv'
 
-# Read the CSV files with proper datetime parsing
+# Define alpha levels and corresponding file paths
+alpha_levels = [0.1, 0.05, 0.01]
+ci_data_paths = {
+    alpha: Path('..') / 'data_SPC24' / f'SPCI-{ciso_name}' /
+           f'{ciso_name}_direct_24hr_CI_forecasts_spci__alpha_{alpha}.csv'
+    for alpha in alpha_levels
+}
+
+# Read the power trace CSV file with proper datetime parsing
 power_trace_df = pd.read_csv(power_trace_path, parse_dates=['hour'])
-ci_data_df = pd.read_csv(ci_data_path, parse_dates=['datetime'])
 
 # Rename the 'hour' column to 'datetime' for consistency
 power_trace_df.rename(columns={'hour': 'datetime'}, inplace=True)
 
-# Use the midpoint of the confidence interval as the forecasted carbon intensity
-ci_data_df['ci_midpoint_forecast'] = (ci_data_df['lower bound'] + ci_data_df['upper bound']) / 2
+# Read one of the CI data files to get the predicted carbon intensity
+# Since the predicted values are the same, we can use any alpha level
+ci_data_sample = pd.read_csv(ci_data_paths[0.1], parse_dates=['datetime'])
+ci_data_sample.rename(columns={'actual': 'carbon_intensity_actual',
+                               'predicted': 'avg_carbon_intensity_predicted'}, inplace=True)
 
-# Rename columns for consistency
-ci_data_df.rename(columns={'actual': 'carbon_intensity_actual',
-                           'predicted': 'avg_carbon_intensity_predicted'}, inplace=True)
-
-# Merge the two DataFrames on 'datetime'
-merged_df = pd.merge(power_trace_df, ci_data_df, on='datetime')
+# Merge the power trace data with the sample CI data
+merged_df = pd.merge(power_trace_df, ci_data_sample[['datetime', 'carbon_intensity_actual',
+                                                     'avg_carbon_intensity_predicted']], on='datetime')
 
 # Initialize lists to store results
 shift_windows = list(range(0, 25))  # Shift windows from 0 to 24 inclusive
 
-# Results for using ci_midpoint_forecast
-total_emissions_ci = []
+# Initialize a dictionary to hold total emissions for each alpha level
+total_emissions_alpha = {alpha: [] for alpha in alpha_levels}
 
-# Results for using avg_carbon_intensity_predicted
+# Initialize a list to hold total emissions when using predicted carbon intensity
 total_emissions_predicted = []
 
 # Calculate the average power utilization without optimization
@@ -107,39 +113,53 @@ def perform_shifting(df, forecast_column, shift_window):
 
 # Loop over shift windows
 for shift_window in shift_windows:
-    # Using ci_midpoint_forecast
-    emissions_ci, df_ci = perform_shifting(
-        merged_df, 'ci_midpoint_forecast', shift_window)
-    total_emissions_ci.append(emissions_ci)
-    
-    # Using avg_carbon_intensity_predicted
-    emissions_predicted, df_predicted = perform_shifting(
-        merged_df, 'avg_carbon_intensity_predicted', shift_window)
+    # First, perform shifting using predicted carbon intensity (independent of CI)
+    emissions_predicted, df_predicted = perform_shifting(merged_df, 'avg_carbon_intensity_predicted', shift_window)
     total_emissions_predicted.append(emissions_predicted)
     
-    # Optional: Generate CSV files for each shift window and method
-    if generate_csv:
-        df_ci.to_csv(f'full_data_shift_{shift_window}_peak_{max_peak_power:.2f}_ci.csv', index=False)
-        df_predicted.to_csv(f'full_data_shift_{shift_window}_peak_{max_peak_power:.2f}_predicted.csv', index=False)
-    
-    # Optional: Generate text reports
-    if generate_text:
-        with open(f'analysis_shift_{shift_window}_peak_{max_peak_power:.2f}_ci.txt', 'w') as f:
-            f.write(f"Shift Window: {shift_window} hours (Using CI Midpoint Forecast)\n")
-            f.write(f"Max Peak Power Limit: {max_peak_power:.2f} kWh\n")
-            f.write(f"Total Carbon Emissions: {emissions_ci:.2f} gCO2\n")
-        with open(f'analysis_shift_{shift_window}_peak_{max_peak_power:.2f}_predicted.txt', 'w') as f:
-            f.write(f"Shift Window: {shift_window} hours (Using Predicted Carbon Intensity)\n")
-            f.write(f"Max Peak Power Limit: {max_peak_power:.2f} kWh\n")
-            f.write(f"Total Carbon Emissions: {emissions_predicted:.2f} gCO2\n")
+    # Loop over alpha levels
+    for alpha in alpha_levels:
+        # Read the CI data file for the current alpha level
+        ci_data_df = pd.read_csv(ci_data_paths[alpha], parse_dates=['datetime'])
+        
+        # Calculate the midpoint of the confidence interval for this alpha level
+        ci_data_df['ci_midpoint_forecast'] = (ci_data_df['lower bound'] + ci_data_df['upper bound']) / 2
+        
+        # Merge the CI data with the merged_df
+        df = merged_df.copy()
+        df = df.merge(ci_data_df[['datetime', 'ci_midpoint_forecast']], on='datetime')
+        
+        # Perform workload shifting using ci_midpoint_forecast
+        emissions, df_shifted = perform_shifting(df, 'ci_midpoint_forecast', shift_window)
+        total_emissions_alpha[alpha].append(emissions)
+        
+        # Optional: Generate CSV files for each shift window and alpha level
+        if generate_csv:
+            df_shifted.to_csv(f'full_data_shift_{shift_window}_peak_{max_peak_power:.2f}_alpha_{alpha}.csv', index=False)
+        
+        # Optional: Generate text reports
+        if generate_text:
+            with open(f'analysis_shift_{shift_window}_peak_{max_peak_power:.2f}_alpha_{alpha}.txt', 'w') as f:
+                f.write(f"Shift Window: {shift_window} hours (Alpha Level: {alpha})\n")
+                f.write(f"Max Peak Power Limit: {max_peak_power:.2f} kWh\n")
+                f.write(f"Total Carbon Emissions: {emissions:.2f} gCO2\n")
 
-# Plot total emissions vs. shift window for both methods
+# Plot total emissions vs. shift window for all alpha levels and the predicted-only case
 plt.figure(figsize=(10,6))
-plt.plot(shift_windows, total_emissions_ci, marker='o', label='Using CI Midpoint Forecast')
-plt.plot(shift_windows, total_emissions_predicted, marker='s', label='Using Predicted Carbon Intensity')
+markers = ['o', 's', 'D']
+colors = ['blue', 'green', 'red']
+for alpha, marker, color in zip(alpha_levels, markers, colors):
+    plt.plot(shift_windows, total_emissions_alpha[alpha], marker=marker, label=f'Alpha Level {alpha}', color=color)
+# Add the predicted-only case
+plt.plot(shift_windows, total_emissions_predicted, marker='^', label='Predicted Only (No CI)', color='purple')
+
 plt.title('Total Carbon Emissions vs. Shift Window Size')
 plt.xlabel('Shift Window Size (hours)')
 plt.ylabel('Total Carbon Emissions (gCO2)')
 plt.legend()
 plt.grid(True)
+
+plot_filename = f'{ciso_name}_power_utilization_analysis_shift_24hrs.png'
+plt.savefig(plot_filename)
+
 plt.show()
