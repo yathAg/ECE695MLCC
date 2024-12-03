@@ -7,6 +7,8 @@ ciso_name = 'ISNE'  # Define the name of the CISO dataset
 power_trace_path = Path('..') / 'data_powerTrace' / 'cella_pdu6_converted.csv'
 ci_data_path = Path('..') / 'data_SPC24' / f'SPCI-{ciso_name}' / f'{ciso_name}_direct_24hr_CI_forecasts_spci__alpha_0.1.csv'
 
+plt.rcParams.update({'font.size': 20})
+
 power_trace_df = pd.read_csv(power_trace_path, parse_dates=['hour'])
 ci_data = pd.read_csv(ci_data_path, parse_dates=['datetime'])
 
@@ -74,7 +76,7 @@ ax2 = ax1.twinx()
 
 # Plot peak power utilization on the right y-axis
 color = 'tab:red'
-ax2.set_ylabel('Peak Power Utilization (kWh)', color=color)
+ax2.set_ylabel('Normalized Peak Power Utilization (kWh)', color=color)
 ax2.plot(shift_windows, peak_power_utilization_list, marker='o', linestyle='-', color=color, label='Peak Power Utilization')
 ax2.tick_params(axis='y', labelcolor=color)
 

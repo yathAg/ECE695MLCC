@@ -2,8 +2,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from pathlib import Path
 
+# Increase all font sizes
+plt.rcParams.update({'font.size': 16})
+
 # Define the CISO name variable
-ciso_name = 'ERCO'
+ciso_name = 'CISO'
 
 # Define paths to the updated CSV files using the CISO variable
 power_trace_path = Path('..') / 'data_powerTrace' / 'cella_pdu6_converted.csv'

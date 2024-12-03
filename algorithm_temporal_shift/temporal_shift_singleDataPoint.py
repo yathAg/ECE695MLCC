@@ -12,6 +12,8 @@ ciso_name = 'CISO'  # Define the name of the CISO dataset
 power_trace_path = Path('..') / 'data_powerTrace' / 'cella_pdu6_converted.csv'
 ci_data_path = Path('..') / 'data_SPC24' / f'SPCI-{ciso_name}' / f'{ciso_name}_direct_24hr_CI_forecasts_spci__alpha_0.1.csv'
 
+plt.rcParams.update({'font.size': 16})
+
 power_trace_df = pd.read_csv(power_trace_path, parse_dates=['hour'])
 ci_data = pd.read_csv(ci_data_path, parse_dates=['datetime'])
 
@@ -73,20 +75,20 @@ if generate_image:
 
     # Plot actual carbon intensity
     plt.subplot(3, 1, 1)
-    plt.plot(merged_df['datetime'], merged_df['actual'], label='Actual Carbon Intensity', color='green')
-    plt.title('Actual Carbon Intensity')
+    plt.plot(merged_df['datetime'], merged_df['actual'], label='True Carbon Intensity distribution', color='green')
+    plt.title('True Carbon Intensity distribution')
     plt.ylabel('gCO2/kWh')
-    plt.legend()
+    # plt.legend()
 
     # Plot shifted (or original) power utilization
     plt.subplot(3, 1, 2)
     plt.plot(merged_df['datetime'], merged_df['shifted_power_util'], label='Power Utilization', color='blue')
     if shift_window > 0:
-        plt.title('Shifted Power Utilization')
+        plt.title('Normalized Power Utilization distribution. (Peak load without shift = 1.0)')
     else:
         plt.title('Original Power Utilization (No Shifting)')
-    plt.ylabel('kWh')
-    plt.legend()
+    plt.ylabel('Normalized kWh')
+    # plt.legend()
 
     # Plot emissions
     plt.subplot(3, 1, 3)
@@ -97,7 +99,7 @@ if generate_image:
         plt.title('Emissions Without Shifting')
     plt.xlabel('Time')
     plt.ylabel('gCO2')
-    plt.legend()
+    # plt.legend()
 
     plt.tight_layout()
 

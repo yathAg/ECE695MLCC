@@ -8,8 +8,10 @@ generate_image = False
 generate_csv = False  # Set to False to avoid generating multiple CSV files
 
 # Define dataset and paths
-ciso_name = 'CISO'  # Define the name of the CISO dataset
+ciso_name = 'ERCO'  # Define the name of the CISO dataset
 power_trace_path = Path('..') / 'data_powerTrace' / 'cella_pdu6_converted.csv'
+
+plt.rcParams.update({'font.size': 20})
 
 # Define alpha levels and corresponding file paths
 alpha_levels = [0.1, 0.05, 0.01]
@@ -145,13 +147,13 @@ for shift_window in shift_windows:
                 f.write(f"Total Carbon Emissions: {emissions:.2f} gCO2\n")
 
 # Plot total emissions vs. shift window for all alpha levels and the predicted-only case
-plt.figure(figsize=(10,6))
+plt.figure(figsize=(15,10))
 markers = ['o', 's', 'D']
 colors = ['blue', 'green', 'red']
 for alpha, marker, color in zip(alpha_levels, markers, colors):
     plt.plot(shift_windows, total_emissions_alpha[alpha], marker=marker, label=f'Alpha Level {alpha}', color=color)
 # Add the predicted-only case
-plt.plot(shift_windows, total_emissions_predicted, marker='^', label='Predicted Only (No CI)', color='purple')
+plt.plot(shift_windows, total_emissions_predicted, marker='^', label='Predicted Only (No Confidence Interval)', color='purple')
 
 plt.title('Total Carbon Emissions vs. Shift Window Size')
 plt.xlabel('Shift Window Size (hours)')
